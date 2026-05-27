@@ -1,0 +1,19 @@
+{
+    "player.select": "Select a player to troll:",
+    "player.troll": "Troll",
+    "troll.tpskybox": "Teleport to skybox",
+    "troll.chat.prefix": " \u0002[Troll]\u0001 ",
+    "troll.tpskybox.chat": "You have been teleported to the skybox!",
+    "troll.stripweapons": "Strip weapons",
+    "troll.stripweapons.chat": "Your weapons have been stolen!",
+    "troll.kill": "Kill player",
+    "troll.kill.chat": "You have been killed!",
+    "troll.connection_problems": "Make connection problems",
+    "troll.connection_problems.chat": "You are experiencing connection problems!",
+    "troll.connection_problems.chat.off": "Connection repaired!",
+    "troll.connection_problems.with_chat": "Connection Problems (With Chat)",
+    "troll.connection_problems.silent": "Connection Problems (S1lent)",
+    "troll.noclip": "N0clip",
+    "troll.noclipon.chat": "Admin turned on noclip for you!",
+    "troll.noclipoff.chat": "Admin turned off your noclip"
+}

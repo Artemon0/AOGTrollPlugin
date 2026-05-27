@@ -1,0 +1,19 @@
+{
+    "player.select": "Выберите игрока для троллинга:",
+    "player.troll": "Троллинг",
+    "troll.tpskybox": "Телепортировать в небо",
+    "troll.chat.prefix": " \u0002[Троллинг]\u0001 ",
+    "troll.tpskybox.chat": "Вы были телепортированы под облака!",
+    "troll.stripweapons": "Отобрать оружие",
+    "troll.stripweapons.chat": "Всё ваше оружие было конфисковано!",
+    "troll.kill": "Убить игрока",
+    "troll.kill.chat": "Вы были ликвидированы админом!",
+    "troll.connection_problems": "Проблемы с соединением",
+    "troll.connection_problems.chat": "У вас возникли проблемы с соединением!",
+    "troll.connection_problems.chat.off": "Соединение восстановлено!",
+    "troll.connection_problems.with_chat": "Проблемы с соединением (С чатом)",
+    "troll.connection_problems.silent": "Проблемы с соединением (Скрыто)",
+    "troll.noclip": "Н0уклип",
+    "troll.noclipon.chat": "Вам включили ноуклип, БЕГОМ летать!",
+    "troll.noclipoff.chat": "Вам выключили ноуклип, хорошо полетали? :)"
+}
