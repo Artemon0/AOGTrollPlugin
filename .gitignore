@@ -2,3 +2,4 @@
 /.vscode
 /cheatsheet.txt
 /AOGTrollPlugin/obj
+/AOGTrollPlugin/obj/*
