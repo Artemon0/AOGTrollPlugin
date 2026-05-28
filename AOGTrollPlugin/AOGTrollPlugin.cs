@@ -49,7 +49,7 @@ namespace AOGTrollPlugin
 
         public override void Load(bool hotReload)
         {
-            Console.WriteLine("[TROLL]!");
+            Console.WriteLine("[TROLL] Plugin loaded!");
         }
 
         private void StartConnectionProblems(
@@ -120,13 +120,43 @@ namespace AOGTrollPlugin
             );
         }
 
-        // private void ToggleAimbot(CCSPlayerController? admin, CCSPlayerController? target)
-        // {
-        //     if (target == null || !target.IsValid || !target.PawnIsAlive)
-        // }
+        private void ToggleAimbot(
+            CCSPlayerController? admin,
+            CCSPlayerController? target,
+            bool silent
+        )
+        {
+            if (target == null || !target.IsValid || !target.PawnIsAlive)
+                return;
+            if (admin == null || !admin.IsValid)
+                return;
+
+            string prefix = Localizer["troll.chat.prefix"];
+            int targetSlot = target.Slot;
+            if (AimbotPlayers.Contains(targetSlot))
+            {
+                AimbotPlayers.Remove(targetSlot);
+                admin.PrintToChat($" {prefix} {Localizer["disabled"]}");
+                if (!silent)
+                {
+                    target.PrintToChat(
+                        $" {prefix} {Localizer["troll.aimbot"]} {Localizer["disabled"]}"
+                    );
+                }
+            }
+            else
+            {
+                AimbotPlayers.Add(targetSlot);
+                if (!silent)
+                    target.PrintToChat(
+                        $" {prefix} {Localizer["troll.aimbot"]} {Localizer["enabled"]}"
+                    );
+                admin.PrintToChat($" {prefix} {Localizer["troll.aimbot"]} {Localizer["enabled"]}");
+            }
+        }
 
         [ConsoleCommand("css_atroll", "Troll a player")]
-        // [RequiresPermissions("@css/troll")]
+        [RequiresPermissions("@css/troll")]
         public void TrollPlayer(CCSPlayerController? player, CommandInfo command)
         {
             if (player == null || !player.IsValid)
@@ -257,54 +287,34 @@ namespace AOGTrollPlugin
                             }
                         );
 
-                        // Pmenu.AddMenuOption(
-                        //     Localizer["troll.aimbot"],
-                        //     (adminCtrl, opt) =>
-                        //     {
-                        //         CenterHtmlMenu subMenu = new(
-                        //             Localizer["troll.aimbot.silent"],
-                        //             this
-                        //         );
+                        Pmenu.AddMenuOption(
+                            Localizer["troll.aimbot"],
+                            (adminCtrl, opt) =>
+                            {
+                                string prefix = Localizer["troll.chat.prefix"];
 
-                        //         subMenu.AddMenuOption(
-                        //             Localizer["troll.aimbot.silent"],
-                        //             (a, o) => { }
-                        //         );
+                                CenterHtmlMenu subMenu = new(
+                                    Localizer["troll.aimbot.issilent"],
+                                    this
+                                );
 
-                        //         if (target == null || !target.IsValid)
-                        //         {
-                        //             adminCtrl.PrintToChat(
-                        //                 " \x02[Troll] \x01Игрок не найден или уже вышел."
-                        //             );
-                        //             return;
-                        //         }
+                                subMenu.AddMenuOption(
+                                    Localizer["troll.aimbot.silent"],
+                                    (a, o) =>
+                                    {
+                                        ToggleAimbot(a, target, true);
+                                    }
+                                );
 
-                        //         int targetSlot = target.Slot;
-
-                        //         if (AimbotPlayers.Contains(targetSlot))
-                        //         {
-                        //             AimbotPlayers.Remove(targetSlot);
-
-                        //             adminCtrl.PrintToChat(
-                        //                 $" \x02[Troll] \x01Аимбот для \x06{target.PlayerName} \x02ВЫКЛЮЧЕН\x01."
-                        //             );
-                        //             target.PrintToChat(
-                        //                 " \x02[Troll] \x01Твои читерские способности пропали :("
-                        //             );
-                        //         }
-                        //         else
-                        //         {
-                        //             AimbotPlayers.Add(targetSlot);
-
-                        //             adminCtrl.PrintToChat(
-                        //                 $" \x02[Troll] \x01Аимбот для \x06{target.PlayerName} \x06ВКЛЮЧЕН\x01."
-                        //             );
-                        //             target.PrintToChat(
-                        //                 " \x02[Troll] \x01У тебя активирован режим терминатора! Стреляй куда угодно."
-                        //             );
-                        //         }
-                        //     }
-                        // );
+                                subMenu.AddMenuOption(
+                                    Localizer["troll.aimbot"],
+                                    (a, o) =>
+                                    {
+                                        ToggleAimbot(a, target, false);
+                                    }
+                                );
+                            }
+                        );
 
                         MenuManager.OpenCenterHtmlMenu(this, admin, Pmenu);
                     }
@@ -318,6 +328,8 @@ namespace AOGTrollPlugin
 /* localization:
 localization      default(en)
 --------------------------------------
+enabled - Turned on
+disabled - Turned off
 player.select - select player to troll
 player.troll - troll a {player.PlayerName}
 troll.tpskybox - teeleport a {Player} to skybox
@@ -336,5 +348,6 @@ troll.noclipon.chat - Admin turned on noclip for you!
 troll.noclipoff.chat - Admin turned off your noclip
 troll.aimbot - Aimbot
 troll.aimbot.issilent - Is silent
+troll.aimbot.silent - Aimbot (s1lent)
 
 */

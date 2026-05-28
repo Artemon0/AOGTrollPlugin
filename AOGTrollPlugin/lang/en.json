@@ -1,4 +1,6 @@
 {
+    "enabled": "turned on",
+    "disabled":"turned off",
     "player.select": "Select a player to troll:",
     "player.troll": "Troll",
     "troll.tpskybox": "Teleport to skybox",
