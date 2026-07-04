@@ -10,21 +10,20 @@ using CounterStrikeSharp.API.Core.Capabilities;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Menu;
+using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
+using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 using Vector = CounterStrikeSharp.API.Modules.Utils.Vector;
 
 namespace AOGTrollPlugin
 {
     public class AOGTrollConfig : BasePluginConfig
     {
-        [JsonPropertyName("EnableTrolling")]
-        public bool EnableTrolling { get; set; } = true;
+        [JsonPropertyName("EnableTrolling")] public bool EnableTrolling { get; set; } = true;
 
-        [JsonPropertyName("RequiresFlag")]
-        public string RequiresFlag { get; set; } = "@css/troll";
+        [JsonPropertyName("RequiresFlag")] public string RequiresFlag { get; set; } = "@css/troll";
 
-        [JsonPropertyName("TrollInterval")]
-        public float TrollInterval { get; set; } = 4.0f;
+        [JsonPropertyName("TrollInterval")] public float TrollInterval { get; set; } = 4.0f;
     }
 
     public class AOGTrollPlugin : BasePlugin, IPluginConfig<AOGTrollConfig>
@@ -37,10 +36,59 @@ namespace AOGTrollPlugin
 
         // private readonly Dictionary<int, float> _cursedPlayers = new();
 
-        private readonly Dictionary<int, Vector> _connectionProblemPlayers = new();
+        // private readonly Dictionary<int, Vector> _connectionProblemPlayers = new();
         private readonly Random _random = new();
 
-        public HashSet<int> AimbotPlayers = new HashSet<int>();
+        private HashSet<int> _aimbotPlayers = new HashSet<int>();
+
+        private readonly string[] _allowedWeapons =
+        [
+            // pistols
+            "weapon_deagle", // Desert Eagle[reference:0][reference:1]
+            "weapon_elite", // Dual Berettas[reference:2][reference:3]
+            "weapon_fiveseven", // Five-SeveN[reference:4][reference:5]
+            "weapon_glock", // Glock-18[reference:6][reference:7]
+            "weapon_hkp2000", // P2000[reference:8][reference:9]
+            "weapon_p250", // P250[reference:10][reference:11]
+            "weapon_usp_silencer", // USP-S[reference:12][reference:13]
+            "weapon_tec9", // Tec-9[reference:14][reference:15]
+            "weapon_cz75a", // CZ75-Auto[reference:16][reference:17]
+            "weapon_revolver", // R8 Revolver[reference:18][reference:19]
+
+            // smg
+            "weapon_mac10", // MAC-10[reference:20][reference:21]
+            "weapon_mp9", // MP9[reference:22][reference:23]
+            "weapon_mp7", // MP7[reference:24][reference:25]
+            "weapon_mp5sd", // MP5-SD[reference:26][reference:27]
+            "weapon_p90", // P90[reference:28][reference:29]
+            "weapon_bizon", // PP-Bizon[reference:30][reference:31]
+            "weapon_ump45", // UMP-45[reference:32][reference:33]
+
+            // rifles
+            "weapon_ak47", // AK-47[reference:34][reference:35]
+            "weapon_galilar", // Galil AR[reference:36][reference:37]
+            "weapon_famas", // FAMAS[reference:38][reference:39]
+            "weapon_m4a1", // M4A4[reference:40][reference:41]
+            "weapon_m4a1_silencer", // M4A1-S[reference:42][reference:43]
+            "weapon_aug", // AUG[reference:44][reference:45]
+            "weapon_sg556", // SG 553[reference:46][reference:47]
+
+            // sniper rifles
+            "weapon_awp", // AWP[reference:48][reference:49]
+            "weapon_ssg08", // SSG 08[reference:50][reference:51]
+            "weapon_scar20", // SCAR-20[reference:52][reference:53]
+            "weapon_g3sg1", // G3SG1[reference:54][reference:55]
+
+            // shotguns
+            "weapon_nova", // Nova[reference:56][reference:57]
+            "weapon_xm1014", // XM1014[reference:58][reference:59]
+            "weapon_mag7", // MAG-7[reference:60][reference:61]
+            "weapon_sawedoff", // Sawed-Off[reference:62][reference:63]
+
+            // machine guns
+            "weapon_m249", // M249[reference:64][reference:65]
+            "weapon_negev" // Negev[reference:66][reference:67]
+        ];
 
         public void OnConfigParsed(AOGTrollConfig config)
         {
@@ -50,10 +98,108 @@ namespace AOGTrollPlugin
         public override void Load(bool hotReload)
         {
             Console.WriteLine("[TROLL] Plugin loaded!");
+
+            RegisterListener<Listeners.OnTick>(OnTickHandler);
+        }
+
+        public override void Unload(bool hotReload)
+        {
+        }
+
+        private void OnTickHandler()
+        {
+            if (_aimbotPlayers.Count == 0)
+                return;
+
+            foreach (var slot in _aimbotPlayers.ToList())
+            {
+                var player = Utilities.GetPlayerFromSlot(slot);
+                if (player == null || !player.IsValid || !player.PawnIsAlive)
+                    continue;
+
+                var pawn = player.PlayerPawn?.Value;
+                if (pawn == null || !pawn.IsValid)
+                    continue;
+
+                var target = FindClosestEnemy(player);
+                if (target == null)
+                    continue;
+
+                var targetPawn = target.PlayerPawn?.Value;
+                if (targetPawn == null || !targetPawn.IsValid)
+                    continue;
+
+                var sourcePos = pawn.AbsOrigin;
+                if (sourcePos == null)
+                    continue;
+
+                Vector eyePos = new Vector(
+                    sourcePos.X + pawn.ViewOffset.X,
+                    sourcePos.Y + pawn.ViewOffset.Y,
+                    sourcePos.Z + pawn.ViewOffset.Z
+                );
+
+                var targetPos = targetPawn.AbsOrigin;
+                if (targetPos == null)
+                    continue;
+
+                Vector targetHeadPos = new Vector(targetPos.X, targetPos.Y, targetPos.Z + 55.0f);
+
+                float deltaX = targetHeadPos.X - eyePos.X;
+                float deltaY = targetHeadPos.Y - eyePos.Y;
+                float deltaZ = targetHeadPos.Z - eyePos.Z;
+
+                float hypotenuse = (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                float yaw = (float)(Math.Atan2(deltaY, deltaX) * 180.0 / Math.PI);
+                float pitch = (float)(-Math.Atan2(deltaZ, hypotenuse) * 180.0 / Math.PI);
+
+                pawn.Teleport(null, new QAngle(pitch, yaw, 0.0f), null);
+            }
+        }
+
+        private CCSPlayerController? FindClosestEnemy(CCSPlayerController player)
+        {
+            var pawn = player.PlayerPawn?.Value;
+            if (pawn == null || !pawn.IsValid || pawn.AbsOrigin == null)
+                return null;
+
+            CCSPlayerController? closestEnemy = null;
+            float minDistance = float.MaxValue;
+
+            var enemies = Utilities
+                .GetPlayers()
+                .Where(p =>
+                    p.IsValid && p.PawnIsAlive && p.TeamNum != player.TeamNum && p.TeamNum > 1
+                );
+
+            foreach (var enemy in enemies)
+            {
+                var enemyPawn = enemy.PlayerPawn?.Value;
+                if (enemyPawn == null || !enemyPawn.IsValid || enemyPawn.AbsOrigin == null)
+                    continue;
+
+                float dist = GetDistance(pawn.AbsOrigin, enemyPawn.AbsOrigin);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closestEnemy = enemy;
+                }
+            }
+
+            return closestEnemy;
+        }
+
+        private float GetDistance(Vector v1, Vector v2)
+        {
+            float dX = v1.X - v2.X;
+            float dY = v1.Y - v2.Y;
+            float dZ = v1.Z - v2.Z;
+            return (float)Math.Sqrt(dX * dX + dY * dY + dZ * dZ);
         }
 
         private void StartConnectionProblems(
-            CCSPlayerController target,
+            CCSPlayerController? target,
             bool silent,
             string prefix,
             float duration
@@ -71,7 +217,7 @@ namespace AOGTrollPlugin
 
             int maxIterations = (int)(duration / 0.1f);
 
-            CounterStrikeSharp.API.Modules.Timers.Timer? lagTimer = null;
+            Timer? lagTimer = null;
 
             lagTimer = AddTimer(
                 0.1f,
@@ -116,7 +262,7 @@ namespace AOGTrollPlugin
                         }
                     }
                 },
-                CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT
+                TimerFlags.REPEAT
             );
         }
 
@@ -133,27 +279,24 @@ namespace AOGTrollPlugin
 
             string prefix = Localizer["troll.chat.prefix"];
             int targetSlot = target.Slot;
-            if (AimbotPlayers.Contains(targetSlot))
+            if (_aimbotPlayers.Contains(targetSlot))
             {
-                AimbotPlayers.Remove(targetSlot);
+                _aimbotPlayers.Remove(targetSlot);
                 admin.PrintToChat($" {prefix} {Localizer["disabled"]}");
                 if (!silent)
                 {
-                    target.PrintToChat(
-                        $" {prefix} {Localizer["troll.aimbot"]} {Localizer["disabled"]}"
-                    );
+                    target.PrintToChat($" {prefix} {Localizer["troll.aimbot.disabled"]}");
                 }
             }
             else
             {
-                AimbotPlayers.Add(targetSlot);
+                _aimbotPlayers.Add(targetSlot);
                 if (!silent)
-                    target.PrintToChat(
-                        $" {prefix} {Localizer["troll.aimbot"]} {Localizer["enabled"]}"
-                    );
-                admin.PrintToChat($" {prefix} {Localizer["troll.aimbot"]} {Localizer["enabled"]}");
+                    target.PrintToChat($" {prefix} {Localizer["troll.aimbot.disabled"]}");
+                admin.PrintToChat($" {prefix} {Localizer["troll.aimbot.admin_enabled"]}"); // dont forget to localize!
             }
         }
+
 
         [ConsoleCommand("css_atroll", "Troll a player")]
         [RequiresPermissions("@css/troll")]
@@ -300,18 +443,12 @@ namespace AOGTrollPlugin
 
                                 subMenu.AddMenuOption(
                                     Localizer["troll.aimbot.silent"],
-                                    (a, o) =>
-                                    {
-                                        ToggleAimbot(a, target, true);
-                                    }
+                                    (a, o) => { ToggleAimbot(a, target, true); }
                                 );
 
                                 subMenu.AddMenuOption(
                                     Localizer["troll.aimbot"],
-                                    (a, o) =>
-                                    {
-                                        ToggleAimbot(a, target, false);
-                                    }
+                                    (a, o) => { ToggleAimbot(a, target, false); }
                                 );
                             }
                         );
@@ -320,6 +457,7 @@ namespace AOGTrollPlugin
                     }
                 );
             }
+
             MenuManager.OpenCenterHtmlMenu(this, player, trollMenu);
         }
     }
@@ -328,8 +466,6 @@ namespace AOGTrollPlugin
 /* localization:
 localization      default(en)
 --------------------------------------
-enabled - Turned on
-disabled - Turned off
 player.select - select player to troll
 player.troll - troll a {player.PlayerName}
 troll.tpskybox - teeleport a {Player} to skybox

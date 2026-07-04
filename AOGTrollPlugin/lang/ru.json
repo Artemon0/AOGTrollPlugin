@@ -1,6 +1,4 @@
 {
-    "enabled": "Включен",
-    "disabled": "Выключен",
     "player.select": "Выберите игрока для троллинга:",
     "player.troll": "Троллинг",
     "troll.tpskybox": "Телепортировать в небо",
@@ -17,5 +15,8 @@
     "troll.connection_problems.silent": "Проблемы с соединением (Скрыто)",
     "troll.noclip": "Н0уклип",
     "troll.noclipon.chat": "Вам включили ноуклип, БЕГОМ летать!",
-    "troll.noclipoff.chat": "Вам выключили ноуклип, хорошо полетали? :)"
+    "troll.noclipoff.chat": "Вам выключили ноуклип, хорошо полетали? :)",
+    "troll.aimbot": "Аимбот",
+    "troll.aimbot.enabled": "Вам включили аим6от!",
+    "troll.aimbot.disabled": "Вам выключили аимбот!"
 }

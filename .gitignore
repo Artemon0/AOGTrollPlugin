@@ -7,3 +7,5 @@
 qodana.yaml
 .idea
 ./.idea
+./obj
+./bin
