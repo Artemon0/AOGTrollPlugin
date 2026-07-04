@@ -22,14 +22,12 @@ namespace AOGTrollPlugin
         [JsonPropertyName("EnableTrolling")] public bool EnableTrolling { get; set; } = true;
 
         [JsonPropertyName("RequiresFlag")] public string RequiresFlag { get; set; } = "@css/troll";
-
-        [JsonPropertyName("TrollInterval")] public float TrollInterval { get; set; } = 4.0f;
     }
 
     public class AOGTrollPlugin : BasePlugin, IPluginConfig<AOGTrollConfig>
     {
         public override string ModuleName => "AOG Troll Plugin";
-        public override string ModuleVersion => "1.1.7";
+        public override string ModuleVersion => "1.1.8";
         public override string ModuleAuthor => "AOGames888";
 
         public AOGTrollConfig Config { get; set; } = new();
@@ -97,16 +95,17 @@ namespace AOGTrollPlugin
 
         public override void Load(bool hotReload)
         {
+            if (!Config.EnableTrolling) return;
+
             Console.WriteLine("[TROLL] Plugin loaded!");
 
-            RegisterListener<Listeners.OnTick>(OnTickHandler);
+            // RegisterListener<Listeners.OnTick>(OnTickHandler);
+            RegisterEventHandler<EventWeaponFire>(Aimbot, HookMode.Pre);
         }
 
-        public override void Unload(bool hotReload)
-        {
-        }
+        public override void Unload(bool hotReload) { }
 
-        private void OnTickHandler()
+        /*private void OnTickHandler()
         {
             if (_aimbotPlayers.Count == 0)
                 return;
@@ -156,11 +155,76 @@ namespace AOGTrollPlugin
 
                 pawn.Teleport(null, new QAngle(pitch, yaw, 0.0f), null);
             }
+        }*/
+
+        public HookResult Aimbot(EventWeaponFire @event, GameEventInfo info)
+        {
+            if (_aimbotPlayers.Count == 0) return HookResult.Continue;
+
+            if (!_allowedWeapons.Contains(@event.Weapon)) return HookResult.Continue;
+
+            foreach (int slot in _aimbotPlayers.ToList())
+            {
+                CCSPlayerController? player = Utilities.GetPlayerFromSlot(slot);
+                if (player == null || !player.IsValid || !player.PawnIsAlive)
+                    continue;
+
+                CCSPlayerPawn? pawn = player.PlayerPawn?.Value;
+                if (pawn == null || !pawn.IsValid)
+                    continue;
+
+                CCSPlayerController? target = FindClosestEnemy(player);
+                if (target == null)
+                    continue;
+
+                CCSPlayerPawn? targetPawn = target.PlayerPawn?.Value;
+                if (targetPawn == null || !targetPawn.IsValid)
+                    continue;
+
+                Vector? sourcePos = pawn.AbsOrigin;
+                if (sourcePos == null)
+                    continue;
+
+                Vector eyePos = new Vector(
+                    sourcePos.X + pawn.ViewOffset.X,
+                    sourcePos.Y + pawn.ViewOffset.Y,
+                    sourcePos.Z + pawn.ViewOffset.Z
+                );
+
+                Vector? targetPos = targetPawn.AbsOrigin;
+                if (targetPos == null)
+                    continue;
+
+                Vector targetHeadPos = new Vector(targetPos.X, targetPos.Y, targetPos.Z + 55.0f);
+
+                float deltaX = targetHeadPos.X - eyePos.X;
+                float deltaY = targetHeadPos.Y - eyePos.Y;
+                float deltaZ = targetHeadPos.Z - eyePos.Z;
+
+                float hypotenuse = (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                float yaw = (float)(Math.Atan2(deltaY, deltaX) * 180.0 / Math.PI);
+                float pitch = (float)(-Math.Atan2(deltaZ, hypotenuse) * 180.0 / Math.PI);
+
+                QAngle oldAngles = pawn.EyeAngles;
+
+
+                pawn.Teleport(null, new QAngle(pitch, yaw, 0.0f));
+
+                AddTimer(0.01f, () =>
+                {
+                    if (player.IsValid && pawn.IsValid && player.PawnIsAlive)
+                        pawn.Teleport(null, oldAngles);
+                });
+            }
+
+            return HookResult.Continue;
         }
 
         private CCSPlayerController? FindClosestEnemy(CCSPlayerController player)
         {
-            var pawn = player.PlayerPawn?.Value;
+            CCSPlayerPawn? pawn = player.PlayerPawn?.Value;
+
             if (pawn == null || !pawn.IsValid || pawn.AbsOrigin == null)
                 return null;
 
@@ -180,11 +244,9 @@ namespace AOGTrollPlugin
                     continue;
 
                 float dist = GetDistance(pawn.AbsOrigin, enemyPawn.AbsOrigin);
-                if (dist < minDistance)
-                {
-                    minDistance = dist;
-                    closestEnemy = enemy;
-                }
+                if (!(dist < minDistance)) continue;
+                minDistance = dist;
+                closestEnemy = enemy;
             }
 
             return closestEnemy;
@@ -201,7 +263,7 @@ namespace AOGTrollPlugin
         private void StartConnectionProblems(
             CCSPlayerController? target,
             bool silent,
-            string prefix,
+            string? prefix,
             float duration
         )
         {
@@ -223,16 +285,16 @@ namespace AOGTrollPlugin
                 0.1f,
                 () =>
                 {
-                    if (target == null || !target.IsValid || !target.PawnIsAlive)
+                    if (!target.IsValid || !target.PawnIsAlive)
                     {
                         lagTimer?.Kill();
                         return;
                     }
 
-                    var pawn = target.PlayerPawn?.Value;
+                    CCSPlayerPawn? pawn = target.PlayerPawn.Value;
                     if (pawn != null && pawn.IsValid)
                     {
-                        var currentPos = pawn.AbsOrigin;
+                        Vector? currentPos = pawn.AbsOrigin;
                         if (currentPos != null)
                         {
                             float offsetX = (float)(_random.NextDouble() * 80 - 40);
@@ -272,16 +334,14 @@ namespace AOGTrollPlugin
             bool silent
         )
         {
-            if (target == null || !target.IsValid || !target.PawnIsAlive)
-                return;
-            if (admin == null || !admin.IsValid)
-                return;
+            if (target == null || !target.IsValid || !target.PawnIsAlive) return;
+            if (admin == null || !admin.IsValid) return;
 
             string prefix = Localizer["troll.chat.prefix"];
             int targetSlot = target.Slot;
-            if (_aimbotPlayers.Contains(targetSlot))
+            if (_aimbotPlayers.Remove(targetSlot))
             {
-                _aimbotPlayers.Remove(targetSlot);
+                // _aimbotPlayers.Remove(targetSlot);
                 admin.PrintToChat($" {prefix} {Localizer["disabled"]}");
                 if (!silent)
                 {
@@ -311,12 +371,12 @@ namespace AOGTrollPlugin
             CenterHtmlMenu trollMenu = new(Localizer["player.select"], this);
             var players = Utilities
                 .GetPlayers()
-                .Where(p => p.IsValid && !p.IsBot && p.Team != CsTeam.Spectator)
+                .Where(p => p is { IsValid: true, IsBot: false } && p.Team != CsTeam.Spectator)
                 .ToList();
 
-            foreach (var i in players)
+            foreach (CCSPlayerController i in players)
             {
-                var target = i;
+                CCSPlayerController target = i;
 
                 trollMenu.AddMenuOption(
                     target.PlayerName,
@@ -331,11 +391,11 @@ namespace AOGTrollPlugin
                             Localizer["troll.tpskybox"],
                             (adminCtrl, opt) =>
                             {
-                                var pawn = target.PlayerPawn?.Value;
+                                CCSPlayerPawn? pawn = target.PlayerPawn?.Value;
                                 if (pawn == null || !pawn.IsValid)
                                     return;
 
-                                var currentPos = pawn.AbsOrigin;
+                                Vector? currentPos = pawn.AbsOrigin;
                                 if (currentPos != null)
                                 {
                                     Vector newPos = new Vector(
@@ -354,7 +414,7 @@ namespace AOGTrollPlugin
                             Localizer["troll.stripweapons"],
                             (adminCtrl, opt) =>
                             {
-                                var pawn = target.PlayerPawn?.Value;
+                                CCSPlayerPawn? pawn = target.PlayerPawn?.Value;
                                 if (pawn?.WeaponServices?.MyWeapons == null)
                                     return;
 
@@ -375,7 +435,7 @@ namespace AOGTrollPlugin
                             Localizer["troll.kill"],
                             (adminCtrl, opt) =>
                             {
-                                var pawn = target.PlayerPawn?.Value;
+                                CCSPlayerPawn? pawn = target.PlayerPawn?.Value;
 
                                 if (pawn != null && pawn.IsValid && target.PawnIsAlive)
                                 {
@@ -409,7 +469,7 @@ namespace AOGTrollPlugin
                             Localizer["troll.noclip"],
                             (adminCtrl, opt) =>
                             {
-                                var pawn = target.Pawn?.Value;
+                                CBasePlayerPawn? pawn = target.Pawn?.Value;
                                 if (pawn != null && pawn.IsValid)
                                 {
                                     if (pawn.MoveType == MoveType_t.MOVETYPE_NOCLIP)
@@ -434,8 +494,6 @@ namespace AOGTrollPlugin
                             Localizer["troll.aimbot"],
                             (adminCtrl, opt) =>
                             {
-                                string prefix = Localizer["troll.chat.prefix"];
-
                                 CenterHtmlMenu subMenu = new(
                                     Localizer["troll.aimbot.issilent"],
                                     this
