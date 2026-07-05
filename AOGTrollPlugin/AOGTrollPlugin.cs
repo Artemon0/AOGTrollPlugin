@@ -19,11 +19,9 @@ namespace AOGTrollPlugin
 {
     public class AOGTrollConfig : BasePluginConfig
     {
-        [JsonPropertyName("EnableTrolling")]
-        public bool EnableTrolling { get; set; } = true;
+        [JsonPropertyName("EnableTrolling")] public bool EnableTrolling { get; set; } = true;
 
-        [JsonPropertyName("RequiresFlag")]
-        public string RequiresFlag { get; set; } = "@css/troll";
+        [JsonPropertyName("RequiresFlag")] public string RequiresFlag { get; set; } = "@css/troll";
     }
 
     public class AOGTrollPlugin : BasePlugin, IPluginConfig<AOGTrollConfig>
@@ -39,8 +37,8 @@ namespace AOGTrollPlugin
         // private readonly Dictionary<int, Vector> _connectionProblemPlayers = new();
         private readonly Random _random = new();
 
-        private HashSet<int> _aimbotPlayers = new HashSet<int>();
-        private Dictionary<CCSPlayerController, Timer> _connectionProblemPlayers = new();
+        private readonly HashSet<int> _aimbotPlayers = new HashSet<int>();
+        private readonly Dictionary<CCSPlayerController, Timer> _connectionProblemPlayers = new();
 
         private readonly string[] _allowedWeapons =
         [
@@ -110,6 +108,7 @@ namespace AOGTrollPlugin
             foreach (var timer in _connectionProblemPlayers.Values)
                 timer?.Kill();
             _connectionProblemPlayers.Clear();
+            _aimbotPlayers.Clear();
         }
 
         /*private void OnTickHandler()
@@ -302,15 +301,16 @@ namespace AOGTrollPlugin
                             _connectionProblemPlayers[target]?.Kill();
                             _connectionProblemPlayers.Remove(target);
                         }
+
                         return;
                     }
 
                     target.PlayerPawn.Value!.Teleport(
                         new Vector(
                             target.PlayerPawn.Value!.AbsOrigin!.X
-                                + (Random.Shared.NextSingle() - 0.5f) * 10f,
+                            + (Random.Shared.NextSingle() - 0.5f) * 10f,
                             target.PlayerPawn.Value!.AbsOrigin!.Y
-                                + (Random.Shared.NextSingle() - 0.5f) * 10f,
+                            + (Random.Shared.NextSingle() - 0.5f) * 10f,
                             target.PlayerPawn.Value!.AbsOrigin!.Z
                         ),
                         null,
@@ -497,18 +497,12 @@ namespace AOGTrollPlugin
 
                                 subMenu.AddMenuOption(
                                     Localizer["troll.aimbot.silent"],
-                                    (a, o) =>
-                                    {
-                                        ToggleAimbot(a, target, true);
-                                    }
+                                    (a, o) => { ToggleAimbot(a, target, true); }
                                 );
 
                                 subMenu.AddMenuOption(
                                     Localizer["troll.aimbot"],
-                                    (a, o) =>
-                                    {
-                                        ToggleAimbot(a, target, false);
-                                    }
+                                    (a, o) => { ToggleAimbot(a, target, false); }
                                 );
                             }
                         );
