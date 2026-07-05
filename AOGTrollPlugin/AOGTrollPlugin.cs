@@ -19,9 +19,11 @@ namespace AOGTrollPlugin
 {
     public class AOGTrollConfig : BasePluginConfig
     {
-        [JsonPropertyName("EnableTrolling")] public bool EnableTrolling { get; set; } = true;
+        [JsonPropertyName("EnableTrolling")]
+        public bool EnableTrolling { get; set; } = true;
 
-        [JsonPropertyName("RequiresFlag")] public string RequiresFlag { get; set; } = "@css/troll";
+        [JsonPropertyName("RequiresFlag")]
+        public string RequiresFlag { get; set; } = "@css/troll";
     }
 
     public class AOGTrollPlugin : BasePlugin, IPluginConfig<AOGTrollConfig>
@@ -38,6 +40,7 @@ namespace AOGTrollPlugin
         private readonly Random _random = new();
 
         private HashSet<int> _aimbotPlayers = new HashSet<int>();
+        private Dictionary<CCSPlayerController, Timer> _connectionProblemPlayers = new();
 
         private readonly string[] _allowedWeapons =
         [
@@ -52,7 +55,6 @@ namespace AOGTrollPlugin
             "weapon_tec9", // Tec-9[reference:14][reference:15]
             "weapon_cz75a", // CZ75-Auto[reference:16][reference:17]
             "weapon_revolver", // R8 Revolver[reference:18][reference:19]
-
             // smg
             "weapon_mac10", // MAC-10[reference:20][reference:21]
             "weapon_mp9", // MP9[reference:22][reference:23]
@@ -61,7 +63,6 @@ namespace AOGTrollPlugin
             "weapon_p90", // P90[reference:28][reference:29]
             "weapon_bizon", // PP-Bizon[reference:30][reference:31]
             "weapon_ump45", // UMP-45[reference:32][reference:33]
-
             // rifles
             "weapon_ak47", // AK-47[reference:34][reference:35]
             "weapon_galilar", // Galil AR[reference:36][reference:37]
@@ -70,32 +71,33 @@ namespace AOGTrollPlugin
             "weapon_m4a1_silencer", // M4A1-S[reference:42][reference:43]
             "weapon_aug", // AUG[reference:44][reference:45]
             "weapon_sg556", // SG 553[reference:46][reference:47]
-
             // sniper rifles
             "weapon_awp", // AWP[reference:48][reference:49]
             "weapon_ssg08", // SSG 08[reference:50][reference:51]
             "weapon_scar20", // SCAR-20[reference:52][reference:53]
             "weapon_g3sg1", // G3SG1[reference:54][reference:55]
-
             // shotguns
             "weapon_nova", // Nova[reference:56][reference:57]
             "weapon_xm1014", // XM1014[reference:58][reference:59]
             "weapon_mag7", // MAG-7[reference:60][reference:61]
             "weapon_sawedoff", // Sawed-Off[reference:62][reference:63]
-
             // machine guns
             "weapon_m249", // M249[reference:64][reference:65]
-            "weapon_negev" // Negev[reference:66][reference:67]
+            "weapon_negev", // Negev[reference:66][reference:67]
         ];
+
+        private const float HEAD_HEIGHT_OFFSET = 55.0f;
+        private const float SKYBOX_TELEPORT_OFFSET = 1000.0f;
 
         public void OnConfigParsed(AOGTrollConfig config)
         {
-            var _config = Config;
+            Config = config;
         }
 
         public override void Load(bool hotReload)
         {
-            if (!Config.EnableTrolling) return;
+            if (!Config.EnableTrolling)
+                return;
 
             Console.WriteLine("[TROLL] Plugin loaded!");
 
@@ -103,7 +105,12 @@ namespace AOGTrollPlugin
             RegisterEventHandler<EventWeaponFire>(Aimbot, HookMode.Pre);
         }
 
-        public override void Unload(bool hotReload) { }
+        public override void Unload(bool hotReload)
+        {
+            foreach (var timer in _connectionProblemPlayers.Values)
+                timer?.Kill();
+            _connectionProblemPlayers.Clear();
+        }
 
         /*private void OnTickHandler()
         {
@@ -159,9 +166,11 @@ namespace AOGTrollPlugin
 
         public HookResult Aimbot(EventWeaponFire @event, GameEventInfo info)
         {
-            if (_aimbotPlayers.Count == 0) return HookResult.Continue;
+            if (_aimbotPlayers.Count == 0)
+                return HookResult.Continue;
 
-            if (!_allowedWeapons.Contains(@event.Weapon)) return HookResult.Continue;
+            if (!_allowedWeapons.Contains(@event.Weapon))
+                return HookResult.Continue;
 
             foreach (int slot in _aimbotPlayers.ToList())
             {
@@ -195,7 +204,11 @@ namespace AOGTrollPlugin
                 if (targetPos == null)
                     continue;
 
-                Vector targetHeadPos = new Vector(targetPos.X, targetPos.Y, targetPos.Z + 55.0f);
+                Vector targetHeadPos = new Vector(
+                    targetPos.X,
+                    targetPos.Y,
+                    targetPos.Z + HEAD_HEIGHT_OFFSET
+                );
 
                 float deltaX = targetHeadPos.X - eyePos.X;
                 float deltaY = targetHeadPos.Y - eyePos.Y;
@@ -208,14 +221,16 @@ namespace AOGTrollPlugin
 
                 QAngle oldAngles = pawn.EyeAngles;
 
-
                 pawn.Teleport(null, new QAngle(pitch, yaw, 0.0f));
 
-                AddTimer(0.01f, () =>
-                {
-                    if (player.IsValid && pawn.IsValid && player.PawnIsAlive)
-                        pawn.Teleport(null, oldAngles);
-                });
+                AddTimer(
+                    0.01f,
+                    () =>
+                    {
+                        if (player.IsValid && pawn.IsValid && player.PawnIsAlive)
+                            pawn.Teleport(null, oldAngles);
+                    }
+                );
             }
 
             return HookResult.Continue;
@@ -244,7 +259,8 @@ namespace AOGTrollPlugin
                     continue;
 
                 float dist = GetDistance(pawn.AbsOrigin, enemyPawn.AbsOrigin);
-                if (!(dist < minDistance)) continue;
+                if (!(dist < minDistance))
+                    continue;
                 minDistance = dist;
                 closestEnemy = enemy;
             }
@@ -275,57 +291,36 @@ namespace AOGTrollPlugin
                 target.PrintToChat($" {prefix} {Localizer["troll.connection_problems.chat"]}");
             }
 
-            int iterations = 0;
-
-            int maxIterations = (int)(duration / 0.1f);
-
-            Timer? lagTimer = null;
-
-            lagTimer = AddTimer(
-                0.1f,
+            Timer lagTimer = AddTimer(
+                0.2f,
                 () =>
                 {
-                    if (!target.IsValid || !target.PawnIsAlive)
+                    if (target == null || !target.IsValid || !target.PawnIsAlive)
                     {
-                        lagTimer?.Kill();
+                        if (target != null && _connectionProblemPlayers.ContainsKey(target))
+                        {
+                            _connectionProblemPlayers[target]?.Kill();
+                            _connectionProblemPlayers.Remove(target);
+                        }
                         return;
                     }
 
-                    CCSPlayerPawn? pawn = target.PlayerPawn.Value;
-                    if (pawn != null && pawn.IsValid)
-                    {
-                        Vector? currentPos = pawn.AbsOrigin;
-                        if (currentPos != null)
-                        {
-                            float offsetX = (float)(_random.NextDouble() * 80 - 40);
-                            float offsetY = (float)(_random.NextDouble() * 80 - 40);
-                            float offsetZ = (float)(_random.NextDouble() * 4 - 2);
-
-                            Vector jitterPos = new Vector(
-                                currentPos.X + offsetX,
-                                currentPos.Y + offsetY,
-                                currentPos.Z + offsetZ
-                            );
-
-                            pawn.Teleport(jitterPos, null, null);
-                        }
-                    }
-
-                    iterations++;
-
-                    if (iterations >= maxIterations)
-                    {
-                        lagTimer?.Kill();
-                        if (!silent)
-                        {
-                            target.PrintToChat(
-                                $" {prefix} {Localizer["troll.connection_problems.chat.off"]}"
-                            );
-                        }
-                    }
+                    target.PlayerPawn.Value!.Teleport(
+                        new Vector(
+                            target.PlayerPawn.Value!.AbsOrigin!.X
+                                + (Random.Shared.NextSingle() - 0.5f) * 10f,
+                            target.PlayerPawn.Value!.AbsOrigin!.Y
+                                + (Random.Shared.NextSingle() - 0.5f) * 10f,
+                            target.PlayerPawn.Value!.AbsOrigin!.Z
+                        ),
+                        null,
+                        null
+                    );
                 },
                 TimerFlags.REPEAT
             );
+
+            _connectionProblemPlayers[target] = lagTimer;
         }
 
         private void ToggleAimbot(
@@ -334,8 +329,10 @@ namespace AOGTrollPlugin
             bool silent
         )
         {
-            if (target == null || !target.IsValid || !target.PawnIsAlive) return;
-            if (admin == null || !admin.IsValid) return;
+            if (target == null || !target.IsValid || !target.PawnIsAlive)
+                return;
+            if (admin == null || !admin.IsValid)
+                return;
 
             string prefix = Localizer["troll.chat.prefix"];
             int targetSlot = target.Slot;
@@ -356,7 +353,6 @@ namespace AOGTrollPlugin
                 admin.PrintToChat($" {prefix} {Localizer["troll.aimbot.admin_enabled"]}"); // dont forget to localize!
             }
         }
-
 
         [ConsoleCommand("css_atroll", "Troll a player")]
         [RequiresPermissions("@css/troll")]
@@ -401,7 +397,7 @@ namespace AOGTrollPlugin
                                     Vector newPos = new Vector(
                                         currentPos.X,
                                         currentPos.Y,
-                                        currentPos.Z + 1000.0f
+                                        currentPos.Z + SKYBOX_TELEPORT_OFFSET
                                     );
                                     pawn.Teleport(newPos, null, null);
                                 }
@@ -501,12 +497,18 @@ namespace AOGTrollPlugin
 
                                 subMenu.AddMenuOption(
                                     Localizer["troll.aimbot.silent"],
-                                    (a, o) => { ToggleAimbot(a, target, true); }
+                                    (a, o) =>
+                                    {
+                                        ToggleAimbot(a, target, true);
+                                    }
                                 );
 
                                 subMenu.AddMenuOption(
                                     Localizer["troll.aimbot"],
-                                    (a, o) => { ToggleAimbot(a, target, false); }
+                                    (a, o) =>
+                                    {
+                                        ToggleAimbot(a, target, false);
+                                    }
                                 );
                             }
                         );
