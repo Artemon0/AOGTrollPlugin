@@ -12,8 +12,13 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Menu;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
+using Serilog;
+using Serilog.Core;
+/* global using */
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 using Vector = CounterStrikeSharp.API.Modules.Utils.Vector;
+
+/* --- */
 
 namespace AOGTrollPlugin
 {
@@ -32,13 +37,26 @@ namespace AOGTrollPlugin
 
         public AOGTrollConfig Config { get; set; } = new();
 
-        // private readonly Dictionary<int, float> _cursedPlayers = new();
-
-        // private readonly Dictionary<int, Vector> _connectionProblemPlayers = new();
         private readonly Random _random = new();
 
-        private readonly HashSet<int> _aimbotPlayers = new HashSet<int>();
-        private readonly Dictionary<CCSPlayerController, Timer> _connectionProblemPlayers = new();
+        private readonly HashSet<int> _aimbotPlayers = [];
+        private readonly Dictionary<CCSPlayerController, Timer> _connectionProblemPlayers = [];
+
+        // cached players
+        private List<CCSPlayerController> _cachedPlayers = [];
+        private float _lastPlayerUpdate;
+        private const float PLAYER_CACHE_INTERVAL = 0.25f; // update 4 times per second
+
+        private List<CCSPlayerController> GetCachedPlayers()
+        {
+            if (!(Server.CurrentTime - _lastPlayerUpdate > PLAYER_CACHE_INTERVAL)) return _cachedPlayers;
+            _cachedPlayers = Utilities.GetPlayers()
+                .Where(p => p is { IsValid: true, IsBot: false } && p.Team != CsTeam.Spectator)
+                .ToList();
+            _lastPlayerUpdate = Server.CurrentTime;
+            return _cachedPlayers;
+        }
+
 
         private readonly string[] _allowedWeapons =
         [
@@ -84,6 +102,7 @@ namespace AOGTrollPlugin
             "weapon_negev", // Negev[reference:66][reference:67]
         ];
 
+        //global constants
         private const float HEAD_HEIGHT_OFFSET = 55.0f;
         private const float SKYBOX_TELEPORT_OFFSET = 1000.0f;
 
@@ -92,83 +111,45 @@ namespace AOGTrollPlugin
             Config = config;
         }
 
+        private ILogger _logger = null!;
+
         public override void Load(bool hotReload)
         {
             if (!Config.EnableTrolling)
-                return;
+                throw new Exception("[AOG TrollPlugin] Enable Trolling is disabled!");
+
+
+            _logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .WriteTo.Console(
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+                )
+                .WriteTo.File(
+                    "logs/AOGAiAnalyzer.log",
+                    rollingInterval: RollingInterval.Day,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                )
+                .CreateLogger();
+
+            _logger.Information("Plugin loaded. Version: {Version}", ModuleVersion);
+
 
             Console.WriteLine("[TROLL] Plugin loaded!");
-
-            // RegisterListener<Listeners.OnTick>(OnTickHandler);
-            RegisterEventHandler<EventWeaponFire>(Aimbot, HookMode.Pre);
         }
 
         public override void Unload(bool hotReload)
         {
-            foreach (var timer in _connectionProblemPlayers.Values)
+            foreach (Timer timer in _connectionProblemPlayers.Values)
                 timer?.Kill();
             _connectionProblemPlayers.Clear();
             _aimbotPlayers.Clear();
         }
 
-        /*private void OnTickHandler()
-        {
-            if (_aimbotPlayers.Count == 0)
-                return;
 
-            foreach (var slot in _aimbotPlayers.ToList())
-            {
-                var player = Utilities.GetPlayerFromSlot(slot);
-                if (player == null || !player.IsValid || !player.PawnIsAlive)
-                    continue;
-
-                var pawn = player.PlayerPawn?.Value;
-                if (pawn == null || !pawn.IsValid)
-                    continue;
-
-                var target = FindClosestEnemy(player);
-                if (target == null)
-                    continue;
-
-                var targetPawn = target.PlayerPawn?.Value;
-                if (targetPawn == null || !targetPawn.IsValid)
-                    continue;
-
-                var sourcePos = pawn.AbsOrigin;
-                if (sourcePos == null)
-                    continue;
-
-                Vector eyePos = new Vector(
-                    sourcePos.X + pawn.ViewOffset.X,
-                    sourcePos.Y + pawn.ViewOffset.Y,
-                    sourcePos.Z + pawn.ViewOffset.Z
-                );
-
-                var targetPos = targetPawn.AbsOrigin;
-                if (targetPos == null)
-                    continue;
-
-                Vector targetHeadPos = new Vector(targetPos.X, targetPos.Y, targetPos.Z + 55.0f);
-
-                float deltaX = targetHeadPos.X - eyePos.X;
-                float deltaY = targetHeadPos.Y - eyePos.Y;
-                float deltaZ = targetHeadPos.Z - eyePos.Z;
-
-                float hypotenuse = (float)Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                float yaw = (float)(Math.Atan2(deltaY, deltaX) * 180.0 / Math.PI);
-                float pitch = (float)(-Math.Atan2(deltaZ, hypotenuse) * 180.0 / Math.PI);
-
-                pawn.Teleport(null, new QAngle(pitch, yaw, 0.0f), null);
-            }
-        }*/
-
+        [GameEventHandler]
         public HookResult Aimbot(EventWeaponFire @event, GameEventInfo info)
         {
-            if (_aimbotPlayers.Count == 0)
-                return HookResult.Continue;
-
-            if (!_allowedWeapons.Contains(@event.Weapon))
+            if (_aimbotPlayers.Count == 0 || !_allowedWeapons.Contains(@event.Weapon))
                 return HookResult.Continue;
 
             foreach (int slot in _aimbotPlayers.ToList())
@@ -245,15 +226,12 @@ namespace AOGTrollPlugin
             CCSPlayerController? closestEnemy = null;
             float minDistance = float.MaxValue;
 
-            var enemies = Utilities
-                .GetPlayers()
-                .Where(p =>
-                    p.IsValid && p.PawnIsAlive && p.TeamNum != player.TeamNum && p.TeamNum > 1
-                );
+            IEnumerable<CCSPlayerController> enemies = GetCachedPlayers()
+                .Where(p => p.PawnIsAlive && p.TeamNum != player.TeamNum && p.TeamNum > 1);
 
-            foreach (var enemy in enemies)
+            foreach (CCSPlayerController enemy in enemies)
             {
-                var enemyPawn = enemy.PlayerPawn?.Value;
+                CCSPlayerPawn? enemyPawn = enemy.PlayerPawn?.Value;
                 if (enemyPawn == null || !enemyPawn.IsValid || enemyPawn.AbsOrigin == null)
                     continue;
 
@@ -365,10 +343,8 @@ namespace AOGTrollPlugin
 
             // menu
             CenterHtmlMenu trollMenu = new(Localizer["player.select"], this);
-            var players = Utilities
-                .GetPlayers()
-                .Where(p => p is { IsValid: true, IsBot: false } && p.Team != CsTeam.Spectator)
-                .ToList();
+            //players
+            IList<CCSPlayerController> players = GetCachedPlayers();
 
             foreach (CCSPlayerController i in players)
             {
@@ -414,7 +390,7 @@ namespace AOGTrollPlugin
                                 if (pawn?.WeaponServices?.MyWeapons == null)
                                     return;
 
-                                foreach (var weapon in pawn.WeaponServices.MyWeapons)
+                                foreach (CHandle<CBasePlayerWeapon> weapon in pawn.WeaponServices.MyWeapons)
                                 {
                                     if (weapon?.Value != null && weapon.Value.IsValid)
                                     {
