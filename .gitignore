@@ -1,12 +1,5 @@
-/.vs
-/.vscode
-/cheatsheet.txt
-/.idea
-/AOGTrollPlugin/obj
-/AOGTrollPlugin/bin
-qodana.yaml
-.idea
-./.idea
-./obj
-./bin
-AOGTrollPlugin.sln.DotSettings.user
+.idea/
+**/bin/
+**/obj/
+**.DotSettings.user
+MenuManagerCS2/
