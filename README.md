@@ -14,7 +14,7 @@ Install CounterStrikeSharp 1.0.374 or newer, [PlayerSettingsCS2 0.9.4 or newer](
 
 The plugin uses `menu:nfcore` and honors the player's menu selection (`!menus`). If the shared API is present but the menu capability is unavailable, it uses CounterStrikeSharp's center menu. The shared API is a required runtime dependency even for this fallback.
 
-Build with `dotnet build AOGTrollPlugin/AOGTrollPlugin.csproj -c Release` using .NET 10. The API contract is included in `vendor/MenuManagerApi` for reproducible builds; do not install its build output over the shared API shipped with MenuManager. GitHub Actions packages the plugin and language files, and creates a release after a push to main or master.
+Build with `dotnet build AOGTrollPlugin/AOGTrollPlugin.csproj -c Release` using .NET 10. The API contract is included in `vendor/MenuManagerApi` for reproducible builds; do not install its build output over the shared API shipped with MenuManager. GitHub Actions builds branch pushes and pull requests. To publish a release, set the project version in `AOGTrollPlugin.csproj`, commit it, and push a matching tag (for example `git tag v2.4.0` followed by `git push origin v2.4.0`).
 
 The Health effect provides 25, 100, and 200 HP options.
 

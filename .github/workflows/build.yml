@@ -3,6 +3,7 @@ name: Build CS2 Plugin
 on:
   push:
     branches: [master, main]
+    tags: ['v*']
   pull_request:
     branches: [master, main]
 
@@ -36,9 +37,8 @@ jobs:
           path: AOGTrollPlugin.zip
           if-no-files-found: error
       - name: Create GitHub Release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="build-${{ github.run_id }}"
-          gh release create "$tag" AOGTrollPlugin.zip --title "AOGTrollPlugin $tag" --generate-notes
+          gh release create "$GITHUB_REF_NAME" AOGTrollPlugin.zip --title "AOGTrollPlugin $GITHUB_REF_NAME" --generate-notes

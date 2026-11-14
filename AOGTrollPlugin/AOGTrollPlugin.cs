@@ -19,7 +19,7 @@ namespace AOGTrollPlugin
     public partial class AOGTrollPlugin : BasePlugin, IPluginConfig<AOGTrollConfig>
     {
         public override string ModuleName => "AOG Troll Plugin";
-        public override string ModuleVersion => "2.2.0";
+        public override string ModuleVersion => typeof(AOGTrollPlugin).Assembly.GetName().Version?.ToString(3) ?? "unknown";
         public override string ModuleAuthor => "AOGames888";
 
         public AOGTrollConfig Config { get; set; } = new();
