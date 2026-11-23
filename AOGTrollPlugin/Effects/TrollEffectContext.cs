@@ -3,10 +3,6 @@ using Microsoft.Extensions.Localization;
 
 namespace AOGTrollPlugin.Effects
 {
-    /// <summary>
-    /// Everything an effect needs to run, bundled up so effect classes don't
-    /// need to depend on the main plugin class directly.
-    /// </summary>
     public sealed class TrollEffectContext(
         BasePlugin plugin,
         IStringLocalizer localizer,

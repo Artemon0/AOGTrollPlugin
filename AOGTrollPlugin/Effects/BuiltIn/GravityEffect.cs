@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Toggles moon-gravity on/off for the target.</summary>
     public sealed class GravityEffect : ITrollEffect
     {
         private const float LowGravityScale = 0.25f;

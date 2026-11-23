@@ -5,14 +5,6 @@ using CounterStrikeSharp.API.Modules.Timers;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Toggle - a constant partial whiteout, like standing in permanent thin
-    /// fog. Same underlying mechanism as FlashEffect/StreamBlindEffect
-    /// (FlashDuration/FlashMaxAlpha/BlindStartTime/BlindUntilTime), but at a
-    /// much lower alpha and, unlike StreamBlindEffect, this one is a normal,
-    /// visible troll effect - it prints a chat line like everything else.
-    /// Stays on and keeps re-applying itself every second until toggled off.
-    /// </summary>
     public sealed class HazyVisionEffect : ITrollEffect
     {
         private const float RefreshIntervalSeconds = 1f;

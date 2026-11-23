@@ -7,7 +7,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Instantly swaps the target's position with a random other living player's.</summary>
     public sealed class SwapPositionsEffect : ITrollEffect
     {
         public string Id => "swap_positions";
@@ -38,8 +37,6 @@ namespace AOGTrollPlugin.Effects.BuiltIn
             if (otherPawn is not { IsValid: true } || otherOrigin == null)
                 return;
 
-            // Copy the origins before teleporting either one - moving the
-            // target first would otherwise make otherOrigin stale.
             Vector targetGoesTo = new(otherOrigin.X, otherOrigin.Y, otherOrigin.Z);
             Vector otherGoesTo = new(targetOrigin.X, targetOrigin.Y, targetOrigin.Z);
 

@@ -3,7 +3,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Toggle - locks the target's FOV zoomed in like a permanent sniper scope, on any weapon.</summary>
     public sealed class SniperVisionEffect : ITrollEffect
     {
         private const uint ZoomedFov = 20;

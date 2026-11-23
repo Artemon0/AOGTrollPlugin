@@ -3,11 +3,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Toggle - zeroes the target's clip after every shot via a
-    /// weapon_fire Post-hook, forcing a reload no matter how much ammo
-    /// they actually had left. Feels like the gun jams constantly.
-    /// </summary>
     public sealed class JammedGunEffect : ITrollEffect
     {
         private readonly TrollStateStore _state;

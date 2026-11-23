@@ -8,11 +8,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Toggle - repeatedly teleports the target onto a random other living
-    /// player every few seconds (reusing the same idea as
-    /// RandomTeleportEffect, just on a loop) until toggled off.
-    /// </summary>
     public sealed class TeleportSpamEffect : ITrollEffect
     {
         private const float IntervalSeconds = 3f;

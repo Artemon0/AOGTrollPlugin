@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AOGTrollPlugin.Effects;
@@ -31,17 +31,18 @@ namespace AOGTrollPlugin
         private readonly PluginCapability<IMenuApi?> _menuApiCapability = new("menu:nfcore");
         private IMenuApi? _menuApi;
 
-        // cached players, refreshed a few times a second instead of every menu open
         private List<CCSPlayerController> _cachedPlayers = [];
         private float _lastPlayerUpdate;
         private const float PlayerCacheInterval = 0.25f;
 
         private ILogger _logger = null!;
+        private DiscordAuditWebhook? _discordAudit;
 
         public void OnConfigParsed(AOGTrollConfig config)
         {
             _registry.EnsureConfigDefaults(config);
             Config = config;
+            _discordAudit?.Configure(config.DiscordWebhookUrls);
         }
 
         public override void Load(bool hotReload)
@@ -56,6 +57,9 @@ namespace AOGTrollPlugin
                 )
                 .CreateLogger();
 
+            _discordAudit = new DiscordAuditWebhook(_logger);
+            _discordAudit.Configure(Config.DiscordWebhookUrls);
+
             RegisterEffects();
             _registry.EnsureConfigDefaults(Config);
 
@@ -68,6 +72,8 @@ namespace AOGTrollPlugin
 
         public override void Unload(bool hotReload)
         {
+            _discordAudit?.Stop();
+            _discordAudit = null;
             _connectionProblems.StopAll();
             _state.ClearAll();
         }
@@ -82,11 +88,6 @@ namespace AOGTrollPlugin
             }
         }
 
-        /// <summary>
-        /// Every effect the plugin ships with gets registered here. To add a new
-        /// one: implement ITrollEffect in Effects/BuiltIn, register it below, and
-        /// add its lang keys to lang/en.json + lang/ru.json.
-        /// </summary>
         private List<CCSPlayerController> GetCachedPlayers()
         {
             if (!(Server.CurrentTime - _lastPlayerUpdate > PlayerCacheInterval))
@@ -109,8 +110,6 @@ namespace AOGTrollPlugin
             if (!Config.EnableTrolling)
                 return;
 
-            // Config.RequiresFlag lets server owners change the required flag
-            // without recompiling; the attribute above is just the hard floor.
             if (!AdminManager.PlayerHasPermissions(admin, Config.RequiresFlag))
             {
                 admin.PrintToChat(Localizer["troll.no_permission"]);
@@ -120,13 +119,69 @@ namespace AOGTrollPlugin
             OpenPlayerMenu(admin);
         }
 
-        private void Execute(TrollEffectVariant variant, CCSPlayerController admin, CCSPlayerController target, string prefix)
+        private void Execute(ITrollEffect effect, TrollEffectVariant variant, CCSPlayerController admin, CCSPlayerController target, string prefix)
         {
-            if (!target.IsValid)
+            if (!admin.IsValid || !target.IsValid || !Config.EnableTrolling || !EffectRegistry.IsEnabled(effect, Config))
                 return;
 
+            if (!AdminManager.PlayerHasPermissions(admin, "@css/troll") || !AdminManager.PlayerHasPermissions(admin, Config.RequiresFlag))
+            {
+                admin.PrintToChat(Localizer["troll.no_permission"]);
+                return;
+            }
+
             TrollEffectContext ctx = new(this, Localizer, _state, admin, target, prefix);
+            if (effect is RandomEffect)
+            {
+                variant.Run(ctx);
+                return;
+            }
+
+            RunEffect(effect, variant, ctx, "menu");
+        }
+
+        private void RunRandomEffect(TrollEffectContext ctx)
+        {
+            var candidates = _registry.Enabled(Config)
+                .Where(effect => effect.IncludeInRandomSelection && effect is not RandomEffect &&
+                    effect.Category is not (EffectCategory.AntiCheat or EffectCategory.Streamer))
+                .Select(effect => (Effect: effect, Variants: effect.GetVariants()))
+                .Where(candidate => candidate.Variants.Count > 0)
+                .ToArray();
+
+            if (candidates.Length == 0)
+            {
+                ctx.PrintToAdmin("troll.random.empty");
+                return;
+            }
+
+            var (effect, variants) = candidates[Random.Shared.Next(candidates.Length)];
+            TrollEffectVariant variant = variants[Random.Shared.Next(variants.Count)];
+            string label = ctx.Localizer[variant.LabelLocalizationKey];
+            ctx.Admin.PrintToChat($" {ctx.ChatPrefix} {ctx.Localizer["troll.random.selected", label]}");
+            RunEffect(effect, variant, ctx, "random");
+        }
+
+        private void RunEffect(ITrollEffect effect, TrollEffectVariant variant, TrollEffectContext ctx, string source)
+        {
+            string adminName = SanitizeAuditName(ctx.Admin.PlayerName);
+            string targetName = SanitizeAuditName(ctx.Target.PlayerName);
+            ulong adminId = ctx.Admin.SteamID;
+            ulong targetId = ctx.Target.SteamID;
+            string map = Server.MapName;
+
+            _logger.Information(
+                "Admin {AdminName} ({AdminSteamId}) invoked effect {EffectId} ({Variant}) on {TargetName} ({TargetSteamId}) via {Source} on {Map}",
+                adminName, adminId, effect.Id, variant.LabelLocalizationKey, targetName, targetId, source, map);
+
+            _discordAudit?.Enqueue(
+                $"{DateTimeOffset.UtcNow:u} | {map}\nAdmin: {adminName} ({adminId})\nTarget: {targetName} ({targetId})\n" +
+                $"Invoked: {effect.Id} ({variant.LabelLocalizationKey})\nSource: {source}");
+
             variant.Run(ctx);
         }
+
+        private static string SanitizeAuditName(string name) =>
+            new(name.Select(character => char.IsControl(character) ? ' ' : character).ToArray());
     }
 }

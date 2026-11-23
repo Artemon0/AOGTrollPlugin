@@ -6,32 +6,10 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Streamer-prank follow-up to the "unbind a movement key" idea from
-    /// earlier: real client-side unbinding isn't something a server can do
-    /// (see BlockDefuseEffect's doc for why), but this gets close to the
-    /// same felt effect for one direction at a time, entirely server-side.
-    ///
-    /// How it works: every tick, for each flagged target, if the chosen
-    /// button (Forward/Back/Moveleft/Moveright) is currently held, the pawn
-    /// gets teleported back to wherever it was the last tick that button
-    /// WASN'T held. The result: as long as they hold that key, they don't
-    /// go anywhere; every other key keeps working normally, and the moment
-    /// they let go, movement resumes immediately with no server message.
-    ///
-    /// Known limitation: this corrects the pawn's full position, not just
-    /// the movement component from the blocked key. If they hold the
-    /// blocked key together with a working one (e.g. blocked Forward +
-    /// working Moveright on a strafe-jump), the correction cancels both for
-    /// that tick, so diagonal movement looks briefly glitchy rather than
-    /// cleanly "one direction removed." Good enough for a prank, not a
-    /// surgical instrument.
-    /// </summary>
     public sealed class StuckKeyEffect : ITrollEffect
     {
         private readonly TrollStateStore _state;
 
-        // Target slot -> last known position while the blocked button was released.
         private readonly Dictionary<int, Vector> _lastFreePosition = new();
 
         public string Id => "stuck_key";
@@ -62,14 +40,9 @@ namespace AOGTrollPlugin.Effects.BuiltIn
 
             _lastFreePosition.Remove(ctx.Target.Slot);
 
-            // Silent to the target, same as the other streamer pranks - see
-            // the class doc for why.
             ctx.PrintToAdmin(nowStuck ? "troll.stuck_key.on.chat" : "troll.stuck_key.off.chat");
         }
 
-        // Which specific button each stuck target has blocked - TrollStateStore
-        // only tracks "is this effect on for this slot", not which of the four
-        // button variants, so that part lives here instead.
         private readonly Dictionary<int, PlayerButtons> _stuckButtonBySlot = new();
 
         private void OnTick()

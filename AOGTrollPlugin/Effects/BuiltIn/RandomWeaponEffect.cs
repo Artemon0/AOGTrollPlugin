@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Hands the target a random weapon from a fixed pool via GiveNamedItem.</summary>
     public sealed class RandomWeaponEffect : ITrollEffect
     {
         private static readonly string[] Pool =

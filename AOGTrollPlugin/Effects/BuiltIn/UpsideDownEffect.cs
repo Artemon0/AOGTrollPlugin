@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Toggle - flips the target's camera roll 180 degrees, turning their whole screen upside down.</summary>
     public sealed class UpsideDownEffect : ITrollEffect
     {
         public string Id => "upside_down";

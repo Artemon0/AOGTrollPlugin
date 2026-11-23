@@ -41,19 +41,19 @@ public partial class AOGTrollPlugin
             _registry.Register(new LaunchEffect());
             _registry.Register(new SniperVisionEffect());
             _registry.Register(new RandomWeaponEffect());
+            _registry.Register(new RandomGrenadeEffect());
+            _registry.Register(new AmmoEffect());
             _registry.Register(new TintEffect());
             _registry.Register(new ArmorEffect());
             _registry.Register(new JammedGunEffect(this, _state));
             _registry.Register(new TeleportSpamEffect());
+            _registry.Register(new RandomEffect(RunRandomEffect));
+            _registry.Register(new RespawnEffect());
 
-            // Anti-cheat punishment effects - see their class docs for exactly
-            // what each one does and does not defeat.
             _registry.Register(new BlindEnemiesEffect(this, _state));
             _registry.Register(new SpectatorLockEffect(this, _state));
             _registry.Register(new DecoyBotEffect(this, _state));
 
-            // Streamer/YouTuber pranks - deliberately silent to the target,
-            // see their class docs for why.
             _registry.Register(new BlockDefuseEffect(this, _state));
             _registry.Register(new StreamBlindEffect());
             _registry.Register(new StuckKeyEffect(this, _state));

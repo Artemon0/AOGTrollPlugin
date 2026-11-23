@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Freezes the target in place (movement locked) until toggled off.</summary>
     public sealed class FreezeEffect : ITrollEffect
     {
         public string Id => "freeze";

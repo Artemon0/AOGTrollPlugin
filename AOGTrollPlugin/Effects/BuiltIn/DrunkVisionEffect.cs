@@ -5,13 +5,6 @@ using CounterStrikeSharp.API.Modules.Timers;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Rapidly wobbles the target's FOV for a few seconds to give a
-    /// "drunk"/seasick camera feeling, then restores the default FOV.
-    /// NOTE: DesiredFOV is exposed by CounterStrikeSharp but its exact
-    /// valid range can vary by game update - tune MinFov/MaxFov if it
-    /// looks off on your server version.
-    /// </summary>
     public sealed class DrunkVisionEffect : ITrollEffect
     {
         private const float DurationSeconds = 6f;

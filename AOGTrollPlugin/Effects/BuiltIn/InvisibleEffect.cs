@@ -5,7 +5,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Toggles full transparency on the target's model.</summary>
     public sealed class InvisibleEffect : ITrollEffect
     {
         public string Id => "invisible";

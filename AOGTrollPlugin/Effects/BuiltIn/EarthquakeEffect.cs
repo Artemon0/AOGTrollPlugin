@@ -6,7 +6,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Shakes the target's screen by jittering their view angles briefly.</summary>
     public sealed class EarthquakeEffect : ITrollEffect
     {
         private const float DurationSeconds = 3f;

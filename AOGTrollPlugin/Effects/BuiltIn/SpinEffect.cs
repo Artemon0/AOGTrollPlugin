@@ -5,7 +5,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Spins the target's view around continuously for a few seconds.</summary>
     public sealed class SpinEffect : ITrollEffect
     {
         private const float DurationSeconds = 4f;

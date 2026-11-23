@@ -1,3 +1,8 @@
+---
+layout: default
+title: Changelog
+---
+
 # Changelog
 
 ## What's new in 2.4.0

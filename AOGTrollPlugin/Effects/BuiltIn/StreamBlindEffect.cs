@@ -5,23 +5,6 @@ using CounterStrikeSharp.API.Modules.Timers;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Streamer-prank effect: an indefinite, fully silent blind. Unlike
-    /// FlashEffect (a one-shot cosmetic flash that fades on its own and
-    /// prints a chat line), this one stays on until toggled off and never
-    /// prints anything to the target - it's meant to look like their own
-    /// game glitched, not like something a plugin did.
-    ///
-    /// Implementation note: the underlying blind fields decay on their own,
-    /// so staying blind indefinitely means re-applying them on a repeating
-    /// timer rather than setting them once. The refresh window is longer
-    /// than the timer interval so there's no flicker back to clear vision
-    /// between refreshes.
-    ///
-    /// Like ConnectionProblemsEffect, this effect keeps its own per-slot
-    /// timer dictionary alongside TrollStateStore's on/off flag, since the
-    /// timer handle itself isn't state TrollStateStore is designed to hold.
-    /// </summary>
     public sealed class StreamBlindEffect : ITrollEffect
     {
         private const float RefreshIntervalSeconds = 1f;
@@ -72,7 +55,6 @@ namespace AOGTrollPlugin.Effects.BuiltIn
                 ClearBlind(ctx.Target);
             }
 
-            // Admin-only - see class doc for why the target hears nothing.
             ctx.PrintToAdmin(nowBlind ? "troll.stream_blind.on.chat" : "troll.stream_blind.off.chat");
         }
 

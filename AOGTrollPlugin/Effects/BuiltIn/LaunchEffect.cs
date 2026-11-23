@@ -5,7 +5,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Launches the target straight up (with a bit of random horizontal kick) via a velocity impulse.</summary>
     public sealed class LaunchEffect : ITrollEffect
     {
         private const float UpwardVelocity = 700f;

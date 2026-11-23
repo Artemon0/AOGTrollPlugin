@@ -6,12 +6,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Toggle - recolors the target's model to a random bright color, using
-    /// the exact same Render/RenderMode/SetStateChanged mechanism as
-    /// InvisibleEffect (full alpha here instead of 0, so the model stays
-    /// fully visible - just tinted).
-    /// </summary>
     public sealed class TintEffect : ITrollEffect
     {
         private static readonly Color[] Palette =

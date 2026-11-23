@@ -7,7 +7,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Teleports the target on top of a random other living player (any team).</summary>
     public sealed class RandomTeleportEffect : ITrollEffect
     {
         private const float LandingHeightOffset = 32f;

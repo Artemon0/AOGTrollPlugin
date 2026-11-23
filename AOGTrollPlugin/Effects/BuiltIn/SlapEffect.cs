@@ -5,7 +5,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Classic admin "slap" - launches the target with a random impulse.</summary>
     public sealed class SlapEffect : ITrollEffect
     {
         private const float HorizontalForce = 250f;

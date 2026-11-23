@@ -98,7 +98,7 @@ public partial class AOGTrollPlugin
                         TrollEffectVariant variant = variants[0];
                         effectMenu.AddMenuOption(
                             Localizer[variant.LabelLocalizationKey],
-                            (a, _) => Execute(variant, a, target, prefix)
+                            (a, _) => Execute(effect, variant, a, target, prefix)
                         );
                         continue;
                     }
@@ -118,7 +118,7 @@ public partial class AOGTrollPlugin
                             {
                                 variantMenu.AddMenuOption(
                                     Localizer[variant.LabelLocalizationKey],
-                                    (a2, _) => Execute(variant, a2, target, prefix)
+                                    (a2, _) => Execute(effect, variant, a2, target, prefix)
                                 );
                             }
 
@@ -141,7 +141,7 @@ public partial class AOGTrollPlugin
                     TrollEffectVariant variant = variants[0];
                     legacyEffectMenu.AddMenuOption(
                         Localizer[variant.LabelLocalizationKey],
-                        (a, _) => Execute(variant, a, target, prefix)
+                        (a, _) => Execute(effect, variant, a, target, prefix)
                     );
                     continue;
                 }
@@ -155,7 +155,7 @@ public partial class AOGTrollPlugin
                         {
                             variantMenu.AddMenuOption(
                                 Localizer[variant.LabelLocalizationKey],
-                                (a2, _) => Execute(variant, a2, target, prefix)
+                                (a2, _) => Execute(effect, variant, a2, target, prefix)
                             );
                         }
 

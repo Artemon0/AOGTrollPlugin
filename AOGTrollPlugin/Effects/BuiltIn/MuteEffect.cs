@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Modules.Commands;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Toggle - silently drops the target's chat messages (say/say_team) while active.</summary>
     public sealed class MuteEffect : ITrollEffect
     {
         private readonly TrollStateStore _state;

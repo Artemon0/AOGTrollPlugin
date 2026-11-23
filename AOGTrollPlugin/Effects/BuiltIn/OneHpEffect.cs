@@ -3,7 +3,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Drops the target to 1 HP - unlike KillEffect, leaves them alive but one bullet from dead.</summary>
     public sealed class OneHpEffect : ITrollEffect
     {
         public string Id => "one_hp";

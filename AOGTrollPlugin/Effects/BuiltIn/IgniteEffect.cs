@@ -3,10 +3,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Sets the target on fire for a few seconds (cosmetic - low burn damage,
-    /// won't drop them below 1 HP so it can't be used as a disguised kill).
-    /// </summary>
     public sealed class IgniteEffect : ITrollEffect
     {
         private const float DurationSeconds = 4f;

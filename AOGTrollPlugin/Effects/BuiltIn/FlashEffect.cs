@@ -4,15 +4,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Cosmetic instant flashbang - whites out the target's screen for a few
-    /// seconds using the same fields the game itself sets when a real
-    /// flashbang detonates nearby. NOTE: like IgniteEffect, this relies on
-    /// CounterStrikeSharp's schema access to CCSPlayerPawnBase's flash
-    /// fields (FlashDuration, FlashMaxAlpha, BlindStartTime, BlindUntilTime);
-    /// re-check those against CounterStrikeSharp's docs if a game update
-    /// ever makes this stop working.
-    /// </summary>
     public sealed class FlashEffect : ITrollEffect
     {
         private const float DurationSeconds = 4f;

@@ -4,7 +4,6 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Strips every weapon except the knife - forces a melee-only round for the target.</summary>
     public sealed class DisarmToKnifeEffect : ITrollEffect
     {
         public string Id => "disarm_to_knife";
@@ -27,7 +26,6 @@ namespace AOGTrollPlugin.Effects.BuiltIn
                 if (weapon?.Value is not { IsValid: true } w)
                     continue;
 
-                // Keep the knife (and bomb, for CTs/Ts carrying it), drop everything else.
                 if (w.DesignerName is "weapon_knife" or "weapon_c4")
                     continue;
 

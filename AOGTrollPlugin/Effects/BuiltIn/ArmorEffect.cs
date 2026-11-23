@@ -3,7 +3,6 @@ using CounterStrikeSharp.API.Core;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>Sets the target's armor to full or strips it entirely.</summary>
     public sealed class ArmorEffect : ITrollEffect
     {
         private const int FullArmor = 100;

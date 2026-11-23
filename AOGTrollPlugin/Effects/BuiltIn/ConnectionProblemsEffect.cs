@@ -8,19 +8,12 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AOGTrollPlugin.Effects.BuiltIn
 {
-    /// <summary>
-    /// Simulates heavy desync/jitter by rapidly nudging the target to random
-    /// nearby positions. Ends automatically after <see cref="DurationSeconds"/>.
-    /// </summary>
     public sealed class ConnectionProblemsEffect : ITrollEffect
     {
         private const float DurationSeconds = 5f;
         private const float TickInterval = 0.2f;
         private const float JitterRange = 10f;
 
-        // Keyed by player slot. Only this effect touches this dictionary, so a
-        // plain instance field (rather than TrollStateStore) is simplest here -
-        // we need to store the actual Timer, not just an on/off flag.
         private readonly Dictionary<int, Timer> _running = new();
 
         public string Id => "connection_problems";
@@ -38,7 +31,6 @@ namespace AOGTrollPlugin.Effects.BuiltIn
             if (!target.IsValid || !target.PawnIsAlive)
                 return;
 
-            // Restart cleanly if it's already running on this target.
             if (_running.TryGetValue(target.Slot, out Timer? existing))
             {
                 existing.Kill();
@@ -92,7 +84,6 @@ namespace AOGTrollPlugin.Effects.BuiltIn
             _running[slot] = lagTimer;
         }
 
-        /// <summary>Called from plugin Unload() so no timers survive a hot reload.</summary>
         public void StopAll()
         {
             foreach (Timer timer in _running.Values)
