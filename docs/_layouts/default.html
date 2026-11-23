@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ page.title }} · AOGTrollPlugin</title><link rel="stylesheet" href="{{ '/style.css' | relative_url }}"><link rel="stylesheet" href="{{ '/layout.css' | relative_url }}"><script defer src="{{ '/docs.js' | relative_url }}"></script></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ page.title }} · AOGTrollPlugin</title><link rel="stylesheet" href="{{ '/style.css' | relative_url }}"><script defer src="{{ '/docs.js' | relative_url }}"></script></head>
 <body>
-<header class="topbar"><button class="mobile-menu" aria-label="Toggle navigation" aria-expanded="false">☰</button><a class="brand" href="{{ '/' | relative_url }}"><b class="logo">A</b><span>AOGTrollPlugin<small>DOCUMENTATION</small></span></a><button class="search-launch">⌕ <span>Search documentation</span> <kbd>Ctrl K</kbd></button><a class="github" href="https://github.com/Artemon0/AOGTrollPlugin">GitHub</a></header>
-<div class="shell"><aside class="sidebar"><span class="version">VERSION 2.4.0</span>
+<header class="topbar"><button class="mobile-menu" aria-label="Toggle navigation" aria-expanded="false">☰</button><a class="brand" href="{{ '/' | relative_url }}">AOGTrollPlugin</a><span class="docs-label">Docs</span><button class="search-launch">⌕ <span>Search documentation</span> <kbd>Ctrl K</kbd></button><a class="github" href="https://github.com/Artemon0/AOGTrollPlugin">GitHub</a></header>
+<div class="shell"><aside class="sidebar"><span class="version">v2.4.0</span>
 {% assign links = 'Overview|index,Installation|installation,Configuration|configuration,Commands & permissions|commands,Effects reference|effects,Audit logging|audit,Development|development,Changelog|changelog' | split: ',' %}
-{% for item in links %}{% assign pair = item | split: '|' %}{% if forloop.index == 1 %}<h3>GET STARTED</h3>{% elsif forloop.index == 4 %}<h3>REFERENCE</h3>{% elsif forloop.index == 7 %}<h3>PROJECT</h3>{% endif %}
+{% for item in links %}{% assign pair = item | split: '|' %}{% if forloop.index == 1 %}<h3>Getting started</h3>{% elsif forloop.index == 4 %}<h3>Reference</h3>{% elsif forloop.index == 7 %}<h3>Project</h3>{% endif %}
 {% assign path = pair[1] | append: '.html' | prepend: '/' %}{% if pair[1] == 'index' %}{% assign path = '/' %}{% endif %}<a href="{{ path | relative_url }}">{{ pair[0] }}</a>{% endfor %}
-<a class="download" href="https://github.com/Artemon0/AOGTrollPlugin/releases/latest">Download latest release ↓</a></aside>
-<main><div class="breadcrumb">Documentation / {{ page.title }}</div><article>{{ content }}</article><footer>AOGTrollPlugin · CounterStrikeSharp</footer></main><aside class="outline"><h3>ON THIS PAGE</h3><div id="outline"></div></aside></div>
+<a class="download" href="https://github.com/Artemon0/AOGTrollPlugin/releases/latest">Releases</a></aside>
+<main><article>{{ content }}</article><footer><a href="https://github.com/Artemon0/AOGTrollPlugin/tree/main/docs">Documentation source</a></footer></main><aside class="outline"><h3>On this page</h3><div id="outline"></div></aside></div>
 <dialog id="search"><div class="search-box"><input id="query" type="search" placeholder="Search documentation…" aria-label="Search documentation"><button id="close-search">Esc</button></div><div id="results" aria-live="polite"></div></dialog>
 </body></html>
